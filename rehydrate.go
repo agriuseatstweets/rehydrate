@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"fmt"
 	"strings"
 	"time"
 	"strconv"
@@ -145,6 +146,14 @@ func waitLookup(client *twitter.Client, ogs []UBOriginal, errs chan error) []twi
 
 	for {
 		tweets, httpResponse, err := client.Statuses.Lookup(ids, &params)
+
+		// temp to debug crazy exception that was happening...
+		if len(tweets) != len(ogs) {
+			err = fmt.Errorf("tweets is not the same length as originals: %v vs. %v.\nids is length: %v.\nIDS: %v.", len(tweets), len(ogs), len(ids), ids)
+
+			panic(err)
+
+		}
 
 		if err == nil && len(tweets) > 0 {
 			return tweets
