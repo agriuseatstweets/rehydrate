@@ -1,0 +1,31 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: agrius-rehydrate
+spec:
+  schedule: "*/15 * * * *"
+  jobTemplate:
+    spec:
+      completions: 1
+      parallelism: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: agrius-rehydrate
+            image: agriuseatstweets/rehydrate:0.0.3
+            resources:
+              requests:
+                memory: "128Mi"
+            envFrom:
+            - secretRef:
+                name: agrius-rehydrate-envs
+            env:
+              - name: KAFKA_BROKERS
+                value: "kafka:9092"
+              - name: REHYDRATE_TOPIC
+                value: "ubdata"
+              - name: PUB_TOPIC
+                value: "tweets"
+              - name: REHYDRATE_SIZE
+                value: "90000"
