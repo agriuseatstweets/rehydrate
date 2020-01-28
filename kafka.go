@@ -19,6 +19,7 @@ func NewKafkaConsumer() KafkaConsumer {
 		"group.id":          "rehydrate",
 		"auto.offset.reset": "earliest",
 		"enable.auto.commit": "false",
+		"max.poll.interval.ms": "960000",
 	})
 
 	if err != nil {
