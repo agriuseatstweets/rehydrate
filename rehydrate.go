@@ -9,7 +9,7 @@ import (
 	"encoding/json"
     "github.com/dghubble/go-twitter/twitter"
     "github.com/agriuseatstweets/go-pubbers/pubbers"
-	"github.com/confluentinc/confluent-kafka-go-dev/kafka"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 type Time struct {

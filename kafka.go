@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 	"encoding/json"
-	"github.com/confluentinc/confluent-kafka-go-dev/kafka"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 type KafkaConsumer struct {
