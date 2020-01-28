@@ -114,8 +114,6 @@ func format(original UBOriginal, tweet twitter.Tweet) AgriusTweet {
 		}
 	}
 
-	// TODO: make omitempty do what you want in Tweet
-
 	return RehydratedTweet{
 			Tweet: &tweet,
 			TH_rehydrated: rehydrated,
