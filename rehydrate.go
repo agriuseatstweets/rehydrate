@@ -28,7 +28,9 @@ func (t *Time) UnmarshalJSON(b []byte) error {
 }
 
 func (t *Time) MarshalJSON() ([]byte, error) {
-	return []byte(t.Time.Format(time.RubyDate)), nil
+	s := t.Time.Format(time.RubyDate)
+	s = "\"" + s + "\""
+	return []byte(s), nil
 }
 
 type UBOriginal struct {
@@ -36,14 +38,14 @@ type UBOriginal struct {
 	Userid int64 `json:"userID,omitempty"`
 	Text string `json:"text,omitempty"`
     Source string `json:"source,omitempty"`
-    Idate Time `json:"iDate,omitempty"`
+    Idate *Time `json:"iDate,omitempty"`
     Truncated int `json:"truncated,omitempty"`
     Retweetid int64 `json:"retweetID,omitempty"`
     Retweetuserid int64 `json:"retweetUserID,omitempty"`
     Retweet int `json:"retweet,omitempty"`
     Sensitive int `json:"sensitive,omitempty"`
     Lang string `json:"lang,omitempty"`
-    Created Time `json:"created,omitempty"`
+    Created *Time `json:"created,omitempty"`
     Lat float64 `json:"lat,omitempty"`
     Lng float64 `json:"lng,omitempty"`
     Placeid string `json:"placeID,omitempty"`
@@ -73,17 +75,17 @@ type UBOriginal struct {
 
 
 type RehydratedTweet struct {
-	twitter.Tweet
+	*twitter.Tweet
 	TH_rehydrated bool `json:"th_rehydrated"`
-	TH_original UBOriginal `json:"th_original"`
+	TH_original *UBOriginal `json:"th_original"`
 	msg kafka.Message
 }
 
 type UnRehydratedTweet struct {
 	ID int64 `json:"id"`
-	CreatedAt Time `json:"created_at"`
+	CreatedAt *Time `json:"created_at"`
 	TH_rehydrated bool `json:"th_rehydrated"`
-	TH_original UBOriginal `json:"th_original"`
+	TH_original *UBOriginal `json:"th_original"`
 	msg kafka.Message
 }
 
@@ -107,7 +109,7 @@ func format(original UBOriginal, tweet twitter.Tweet) AgriusTweet {
 			ID: original.ID,
 			CreatedAt: original.Created,
 			TH_rehydrated: rehydrated,
-			TH_original: original,
+			TH_original: &original,
 			msg: original.msg,
 		}
 	}
@@ -115,23 +117,23 @@ func format(original UBOriginal, tweet twitter.Tweet) AgriusTweet {
 	// TODO: make omitempty do what you want in Tweet
 
 	return RehydratedTweet{
-			Tweet: tweet,
+			Tweet: &tweet,
 			TH_rehydrated: rehydrated,
-			TH_original: original,
+			TH_original: &original,
 			msg: original.msg,
 	}
 }
 
 func getIds (ogs []UBOriginal) []int64{
-	var ids []int64
-	for _, t := range ogs {
-		ids = append(ids, t.ID)
+	ids := make([]int64, len(ogs))
+	for i, t := range ogs {
+		ids[i] = t.ID
 	}
 	return ids
 }
 
 
-func waitLookup(client *twitter.Client, v []UBOriginal, errs chan error) []twitter.Tweet {
+func waitLookup(client *twitter.Client, ogs []UBOriginal, errs chan error) []twitter.Tweet {
 	ents := true
 	mp := true
 
@@ -140,7 +142,7 @@ func waitLookup(client *twitter.Client, v []UBOriginal, errs chan error) []twitt
 		Map: &mp,
 	}
 
-	ids := getIds(v)
+	ids := getIds(ogs)
 
 	for {
 		tweets, httpResponse, err := client.Statuses.Lookup(ids, &params)
@@ -148,6 +150,7 @@ func waitLookup(client *twitter.Client, v []UBOriginal, errs chan error) []twitt
 		if err == nil && len(tweets) > 0 {
 			return tweets
 		}
+
 		HandleErrors(err, httpResponse, errs)
 	}
 }
@@ -177,7 +180,7 @@ func prepTweets(tweets chan AgriusTweet, errs chan error) chan pubbers.QueuedMes
 		defer close(out)
 		for tw := range tweets {
 			id := []byte(tw.getTweetIDStr())
-			t, err := json.Marshal(tw)
+			t, err := json.Marshal(&tw)
 
 			if err != nil {
 				errs <- err
