@@ -8,12 +8,13 @@ spec:
     spec:
       completions: 1
       parallelism: 1
+      backoffLimit: 1
       template:
         spec:
           restartPolicy: OnFailure
           containers:
           - name: agrius-rehydrate
-            image: agriuseatstweets/rehydrate:0.0.3
+            image: agriuseatstweets/rehydrate:0.0.6
             resources:
               requests:
                 memory: "128Mi"

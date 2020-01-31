@@ -78,7 +78,6 @@ type RehydratedTweet struct {
 	*twitter.Tweet
 	TH_rehydrated bool `json:"th_rehydrated"`
 	TH_original *UBOriginal `json:"th_original"`
-	msg kafka.Message
 }
 
 type UnRehydratedTweet struct {
@@ -86,19 +85,24 @@ type UnRehydratedTweet struct {
 	CreatedAt *Time `json:"created_at"`
 	TH_rehydrated bool `json:"th_rehydrated"`
 	TH_original *UBOriginal `json:"th_original"`
-	msg kafka.Message
 }
 
 type AgriusTweet interface {
-	getTweetIDStr() string
+	getCreatedAt() time.Time
 }
 
-func (t RehydratedTweet) getTweetIDStr() string {
-	return strconv.FormatInt(t.ID, 10)
+func (t RehydratedTweet) getCreatedAt() time.Time {
+	created, err := t.CreatedAtTime()
+
+	if err != nil {
+		panic(err)
+	}
+
+	return created
 }
 
-func (t UnRehydratedTweet) getTweetIDStr() string {
-	return strconv.FormatInt(t.ID, 10)
+func (t UnRehydratedTweet) getCreatedAt() time.Time {
+	return t.CreatedAt.Time
 }
 
 func format(original UBOriginal, tweet twitter.Tweet) AgriusTweet {
@@ -110,7 +114,6 @@ func format(original UBOriginal, tweet twitter.Tweet) AgriusTweet {
 			CreatedAt: original.Created,
 			TH_rehydrated: rehydrated,
 			TH_original: &original,
-			msg: original.msg,
 		}
 	}
 
@@ -118,7 +121,6 @@ func format(original UBOriginal, tweet twitter.Tweet) AgriusTweet {
 			Tweet: &tweet,
 			TH_rehydrated: rehydrated,
 			TH_original: &original,
-			msg: original.msg,
 	}
 }
 
@@ -177,14 +179,15 @@ func prepTweets(tweets chan AgriusTweet, errs chan error) chan pubbers.QueuedMes
 	go func(){
 		defer close(out)
 		for tw := range tweets {
-			id := []byte(tw.getTweetIDStr())
+			created := tw.getCreatedAt()
+			key := []byte(created.Format("2006-01-02"))
 			t, err := json.Marshal(&tw)
 
 			if err != nil {
 				errs <- err
 				continue
 			}
-			out <- pubbers.QueuedMessage{id, t}
+			out <- pubbers.QueuedMessage{key, t}
 		}
 	}()
 	return out
