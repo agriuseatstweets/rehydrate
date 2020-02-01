@@ -13,13 +13,14 @@ type KafkaConsumer struct {
 func NewKafkaConsumer() KafkaConsumer {
 	topic := os.Getenv("REHYDRATE_TOPIC")
 	brokers := os.Getenv("KAFKA_BROKERS")
+	pollInterval := os.Getenv("KAFKA_CONSUMER_POLL_INTERVAl")
 
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": brokers,
 		"group.id":          "rehydrate",
 		"auto.offset.reset": "earliest",
 		"enable.auto.commit": "false",
-		"max.poll.interval.ms": "960000",
+		"max.poll.interval.ms": pollInterval,
 	})
 
 	if err != nil {
