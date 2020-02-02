@@ -3,7 +3,7 @@ module github.com/agriuseatstweets/rehydrate
 go 1.13
 
 require (
-	github.com/agriuseatstweets/go-pubbers v0.0.0-20200202131858-45b5a5fd468e
+	github.com/agriuseatstweets/go-pubbers v0.0.0-20200202173232-91fc684d3814
 	github.com/confluentinc/confluent-kafka-go v1.3.0
 	github.com/dghubble/go-twitter v0.0.0-20190719072343-39e5462e111f
 	github.com/dghubble/oauth1 v0.6.0

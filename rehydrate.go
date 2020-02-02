@@ -161,6 +161,7 @@ func rehydrate(client *twitter.Client, inchan chan []UBOriginal, errs chan error
 		for originals := range inchan {
 			tweets := waitLookup(client, originals, errs)
 
+			log.Printf("Recieved response from Twitter")
 			for i, tw := range tweets {
 				og := originals[i]
 				rt := format(og, tw)
@@ -196,13 +197,23 @@ func monitor(errs <-chan error) {
 	log.Fatalf("Rehydrate failed with error: %v", e)
 }
 
-func RunBatch(client *twitter.Client, consumer KafkaConsumer, batchSize int, writer pubbers.KafkaWriter, errs chan error) pubbers.WriteResults {
+func RunBatch(client *twitter.Client, consumer KafkaConsumer, batchSize int, errs chan error) pubbers.WriteResults {
 
+	writer, err := pubbers.NewKafkaWriter()
+	if err != nil {
+		errs <- err
+	}
 	ogs := consumer.Consume(batchSize, 100, errs)
 	rts := rehydrate(client, ogs, errs)
 	messages := prepTweets(rts, errs)
-	results := writer.Publish(messages, errs, false)
-	_, _ = consumer.Consumer.Commit()
+	results := writer.Publish(messages, errs)
+	tp, err := consumer.Consumer.Commit()
+
+	if err != nil {
+		errs <- err
+	}
+
+	log.Printf("Committed topic partition: %v", tp)
 
 	return results
 }
@@ -214,11 +225,6 @@ func main() {
 	errs := make(chan error)
 	go monitor(errs)
 
-	writer, err := pubbers.NewKafkaWriter()
-	if err != nil {
-		errs <- err
-	}
-
 	size, _ := strconv.Atoi(os.Getenv("REHYDRATE_SIZE"))
  	consumer := NewKafkaConsumer()
 
@@ -227,10 +233,8 @@ func main() {
 	results := make([]pubbers.WriteResults, n)
 
 	for i, _ := range results {
-		results[i] = RunBatch(client, consumer, batchSize, writer, errs)
+		results[i] = RunBatch(client, consumer, batchSize, errs)
 	}
-
-	writer.Producer.Close()
 
 	written := 0
 	sent := 0
@@ -239,5 +243,5 @@ func main() {
 		sent += r.Sent
 	}
 
-	log.Printf("Publisher closed, published %v tweets out of %v sent", written, sent)
+	log.Printf("Publisher closed, published %v tweets out of %v sent and %v receieved", written, sent, size)
 }
