@@ -161,7 +161,6 @@ func rehydrate(client *twitter.Client, inchan chan []UBOriginal, errs chan error
 		for originals := range inchan {
 			tweets := waitLookup(client, originals, errs)
 
-			log.Printf("Recieved response from Twitter")
 			for i, tw := range tweets {
 				og := originals[i]
 				rt := format(og, tw)
