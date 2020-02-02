@@ -132,7 +132,6 @@ func getIds (ogs []UBOriginal) []int64{
 	return ids
 }
 
-
 func waitLookup(client *twitter.Client, ogs []UBOriginal, errs chan error) []twitter.Tweet {
 	ents := true
 	mp := true
@@ -154,7 +153,6 @@ func waitLookup(client *twitter.Client, ogs []UBOriginal, errs chan error) []twi
 		HandleErrors(err, httpResponse, errs)
 	}
 }
-
 
 func rehydrate(client *twitter.Client, inchan chan []UBOriginal, errs chan error) (chan AgriusTweet) {
 	ch := make(chan AgriusTweet)
@@ -193,10 +191,20 @@ func prepTweets(tweets chan AgriusTweet, errs chan error) chan pubbers.QueuedMes
 	return out
 }
 
-
 func monitor(errs <-chan error) {
 	e := <- errs
 	log.Fatalf("Rehydrate failed with error: %v", e)
+}
+
+func RunBatch(client *twitter.Client, consumer KafkaConsumer, batchSize int, writer pubbers.KafkaWriter, errs chan error) pubbers.WriteResults {
+
+	ogs := consumer.Consume(batchSize, 100, errs)
+	rts := rehydrate(client, ogs, errs)
+	messages := prepTweets(rts, errs)
+	results := writer.Publish(messages, errs, false)
+	_, _ = consumer.Consumer.Commit()
+
+	return results
 }
 
 
@@ -206,20 +214,30 @@ func main() {
 	errs := make(chan error)
 	go monitor(errs)
 
-	p, err := pubbers.NewKafkaWriter()
+	writer, err := pubbers.NewKafkaWriter()
 	if err != nil {
 		errs <- err
 	}
 
 	size, _ := strconv.Atoi(os.Getenv("REHYDRATE_SIZE"))
  	consumer := NewKafkaConsumer()
-	ogs := consumer.Consume(size, 100, errs)
 
-	rts := rehydrate(client, ogs, errs)
-	messages := prepTweets(rts, errs)
-	results := p.Publish(messages, errs)
+	batchSize, _ := strconv.Atoi(os.Getenv("BATCH_SIZE"))
+	n := size/batchSize
+	results := make([]pubbers.WriteResults, n)
 
-	_, _ = consumer.Consumer.Commit()
+	for i, _ := range results {
+		results[i] = RunBatch(client, consumer, batchSize, writer, errs)
+	}
 
-	log.Printf("Publisher closed, published %v tweets out of %v sent", results.Written, results.Sent)
+	writer.Producer.Close()
+
+	written := 0
+	sent := 0
+	for _, r := range results {
+		written += r.Written
+		sent += r.Sent
+	}
+
+	log.Printf("Publisher closed, published %v tweets out of %v sent", written, sent)
 }

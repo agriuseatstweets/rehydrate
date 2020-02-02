@@ -13,7 +13,7 @@ type KafkaConsumer struct {
 func NewKafkaConsumer() KafkaConsumer {
 	topic := os.Getenv("REHYDRATE_TOPIC")
 	brokers := os.Getenv("KAFKA_BROKERS")
-	pollInterval := os.Getenv("KAFKA_CONSUMER_POLL_INTERVAl")
+	pollInterval := os.Getenv("KAFKA_POLL_INTERVAL")
 
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": brokers,

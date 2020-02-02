@@ -19,8 +19,12 @@ dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/agriuseatstweets/go-pubbers v0.0.0-20200131135418-d9369716e680 h1:TNAEBWIi1VtaOP9fY6ugbdDegjHurd9bMEaYETfzO0o=
-github.com/agriuseatstweets/go-pubbers v0.0.0-20200131135418-d9369716e680/go.mod h1:m+GjJk2vPGt0dFb+m/ShJT12Ic3BD59jfYDgCn2hDd4=
+github.com/agriuseatstweets/go-pubbers v0.0.0-20200202130300-51367b133c36 h1:PibNhM/PGALXurfmVQcDHK3MjLL0QAGQdEz6nZyqw/w=
+github.com/agriuseatstweets/go-pubbers v0.0.0-20200202130300-51367b133c36/go.mod h1:m+GjJk2vPGt0dFb+m/ShJT12Ic3BD59jfYDgCn2hDd4=
+github.com/agriuseatstweets/go-pubbers v0.0.0-20200202131211-fdd6fa707abf h1:apWj89eNW4XGj7jMO2A4T9kJxURwwf78BC65Vkp3LmY=
+github.com/agriuseatstweets/go-pubbers v0.0.0-20200202131211-fdd6fa707abf/go.mod h1:m+GjJk2vPGt0dFb+m/ShJT12Ic3BD59jfYDgCn2hDd4=
+github.com/agriuseatstweets/go-pubbers v0.0.0-20200202131858-45b5a5fd468e h1:NhjLc//2o/C+7xLgWeabGhBGZ5a7prXzGOB8Pv4Dh1c=
+github.com/agriuseatstweets/go-pubbers v0.0.0-20200202131858-45b5a5fd468e/go.mod h1:m+GjJk2vPGt0dFb+m/ShJT12Ic3BD59jfYDgCn2hDd4=
 github.com/cenkalti/backoff v2.1.1+incompatible h1:tKJnvO2kl0zmb/jA5UKAt4VoEVw1qxKWjE/Bpp46npY=
 github.com/cenkalti/backoff v2.1.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
