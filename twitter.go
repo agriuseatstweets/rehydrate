@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"fmt"
 	"time"
 	"strconv"
 	"net/http"
@@ -29,8 +30,16 @@ func HandleErrors(err error, httpResponse *http.Response, errs chan error) {
 		// Twitter rate limits, so sleep until limit resets
 		case 429:
 			_, reset := ParseRateLimiting(httpResponse)
-			log.Printf("Sleeping: %v\n", reset)
-			time.Sleep(reset + time.Second)
+
+			// If its short, just wait for it
+			if reset.Seconds() < 60 {
+				time.Sleep(reset)
+				return
+			}
+
+			// Else, blow up and wait for next cron to run
+			err = fmt.Errorf("Rehydrate hit rate limit, which will reset in: %v\n", reset)
+			errs <- err
 			return
 
 		default:
