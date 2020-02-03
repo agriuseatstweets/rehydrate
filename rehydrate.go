@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"sync"
 	"fmt"
 	"strings"
 	"time"
@@ -163,7 +164,7 @@ func waitLookup(client *twitter.Client, ogs []UBOriginal, errs chan error) []twi
 	}
 }
 
-func rehydrate(client *twitter.Client, inchan chan []UBOriginal, errs chan error) (chan AgriusTweet) {
+func rehydrate(client *twitter.Client, inchan chan []UBOriginal, errs chan error) (<-chan AgriusTweet) {
 	ch := make(chan AgriusTweet)
 	go func() {
 		defer close(ch)
@@ -181,7 +182,7 @@ func rehydrate(client *twitter.Client, inchan chan []UBOriginal, errs chan error
 }
 
 
-func prepTweets(tweets chan AgriusTweet, errs chan error) chan pubbers.QueuedMessage {
+func prepTweets(tweets <-chan AgriusTweet, errs chan error) chan pubbers.QueuedMessage {
 	out := make(chan pubbers.QueuedMessage)
 	go func(){
 		defer close(out)
@@ -205,14 +206,50 @@ func monitor(errs <-chan error) {
 	log.Fatalf("Rehydrate failed with error: %v", e)
 }
 
+
+func merge(cs ...<-chan AgriusTweet) <-chan AgriusTweet {
+    var wg sync.WaitGroup
+    out := make(chan AgriusTweet)
+
+    output := func(c <-chan AgriusTweet) {
+        for n := range c {
+            out <- n
+        }
+        wg.Done()
+    }
+    wg.Add(len(cs))
+    for _, c := range cs {
+        go output(c)
+    }
+
+    go func() {
+        wg.Wait()
+        close(out)
+    }()
+    return out
+}
+
+func parallelRehydrate(client *twitter.Client, inchan chan []UBOriginal, n int, errs chan error) (<-chan AgriusTweet) {
+
+	rts := make([]<-chan AgriusTweet, n)
+	for i, _ := range rts {
+		rts[i] = rehydrate(client, inchan, errs)
+	}
+	return merge(rts...)
+}
+
 func RunBatch(client *twitter.Client, consumer KafkaConsumer, batchSize int, errs chan error) pubbers.WriteResults {
 
 	writer, err := pubbers.NewKafkaWriter()
 	if err != nil {
 		errs <- err
 	}
+
 	ogs := consumer.Consume(batchSize, 100, errs)
-	rts := rehydrate(client, ogs, errs)
+
+	parallel := batchSize / 100
+
+	rts := parallelRehydrate(client, ogs, parallel, errs)
 	messages := prepTweets(rts, errs)
 	results := writer.Publish(messages, errs)
 	tp, err := consumer.Consumer.Commit()
