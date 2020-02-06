@@ -33,6 +33,7 @@ func HandleErrors(err error, httpResponse *http.Response, errs chan error) {
 
 			// If its short, just wait for it
 			if reset.Seconds() < 60 {
+				log.Printf("Sleeping %v seconds.", reset)
 				time.Sleep(reset)
 				return
 			}
